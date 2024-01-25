@@ -1,3 +1,4 @@
+#include <cmath>
 #include <torch/torch.h>
 #include "Classes.h"
 
@@ -24,3 +25,26 @@ struct FeedForwardImpl : torch::nn::Module {
 };
 TORCH_MODULE(FeedForward);
 
+struct AttentionImpl : torch::nn::Module {
+    
+    AttentionImpl(int dim, int heads = 8, int dim_head = 8, float dropout = 0.0) 
+        : norm(torch::nn::LayerNormOptions({dim})),
+        attend(torch::nn::SoftmaxOptions(-1)),
+        dropout(torch::nn::DropoutOptions(dropout)),
+        to_qkv(torch::nn::LinearOptions(dim, dim_head * heads * 3).bias(false)),
+        to_out(
+            // TODO
+        )
+    {
+        heads = heads;
+        scale = pow((float)dim_head, -0.5);
+    }
+    int heads;
+    float scale;
+    torch::nn::LayerNorm norm;
+    torch::nn::Softmax attend;
+    torch::nn::Dropout dropout;
+    torch::nn::Linear to_qkv;
+    torch::nn::Sequential to_out;
+};
+TORCH_MODULE(Attention);
