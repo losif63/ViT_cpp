@@ -62,7 +62,7 @@ public:
         int mlp_dim, 
         char* pool = (char*)"cls",
         int channels = 3, 
-        int dim_head = 64, 
+        int dim_head = 64,
         float dropout = 0.0, 
         float emb_dropout = 0.0
     );

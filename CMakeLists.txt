@@ -18,7 +18,7 @@ configure_file(Config.h.in Config.h)
 
 add_subdirectory(vit_pytorch_cpp)
 
-add_executable(vit vit.cpp)
+add_executable(vit main.cpp)
 
 target_compile_options(vit PRIVATE -pthread -lpthread)
 target_link_libraries(vit PUBLIC "${TORCH_LIBRARIES}" compiler_flags vit_pytorch_cpp PRIVATE pthread)

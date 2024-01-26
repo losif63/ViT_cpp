@@ -63,26 +63,21 @@ torch::Tensor AttentionImpl::forward(torch::Tensor x) {
 TransformerImpl::TransformerImpl(int dim, int depth, int heads, int dim_head, int mlp_dim, float dropout)
 {
     this->norm = register_module("norm", torch::nn::LayerNorm(torch::nn::LayerNormOptions({dim})));
-    this->layers = register_module("layers", torch::nn::ModuleList({}));
+    this->layers = register_module("layers", torch::nn::ModuleList());
     for (int i = 0; i < depth; i++) {
-        // POTENTIAL_BUG_LOCATION: push_back "unwraps" moduleholder & adds it to modulelist 
-        // Use below commented code if bug is detected
-        this->layers->push_back(torch::nn::ModuleList(
-            Attention(dim, heads, dim_head, dropout),
-            FeedForward(dim, mlp_dim, dropout)
-        ));
-
-        // torch::nn::ModuleList temp_list = torch::nn::ModuleList({});
-        // this->layers->push_back(temp_list);
-        // temp_list->push_back(Attention(dim, heads, dim_head, dropout));
-        // temp_list->push_back(FeedForward(dim, mlp_dim, dropout));
+        torch::nn::ModuleList layer = torch::nn::ModuleList();
+        layer->push_back(Attention(dim, heads, dim_head, dropout));
+        layer->push_back(FeedForward(dim, mlp_dim, dropout));
+        this->layers->push_back(layer);
     }
 }
 
 torch::Tensor TransformerImpl::forward(torch::Tensor x) {
-    for (auto asdf = this->layers->begin(); asdf != this->layers->end(); asdf++) {
-        x = (asdf)[0]->as<Attention>()->forward(x) + x;
-        x = (asdf)[1]->as<FeedForward>()->forward(x) + x;
+    this->layers->size();
+    for (size_t i = 0; i < this->layers->size(); i++) {
+        torch::nn::ModuleListImpl elem = this->layers->at<torch::nn::ModuleListImpl>(i);
+        x = elem.at<AttentionImpl>(0).forward(x) + x;
+        x = elem.at<FeedForwardImpl>(1).forward(x) + x;
     }
     return this->norm(x);
 }
@@ -159,17 +154,23 @@ torch::Tensor ViTImpl::forward(torch::Tensor x) {
     int b = x.size(0);
     int n = x.size(1);
     
-    torch::Tensor cls_tokens = this->cls_token.repeat(b).view({b, 1, -1});
+    torch::Tensor cls_tokens = this->cls_token.repeat({b, 1, 1});
+    std::cout << "REACHED HERE 1" << std::endl;
     x = torch::cat({cls_tokens, x}, 1);
+    std::cout << "REACHED HERE 2" << std::endl;
     x += this->pos_embedding.index({torch::indexing::Slice(), torch::indexing::Slice(torch::indexing::None, (n + 1))});
+    std::cout << "REACHED HERE 3" << std::endl;
     x = this->dropout(x);
+    std::cout << "REACHED HERE 4" << std::endl;
     x = this->transformer(x);
+    std::cout << "REACHED HERE 5" << std::endl;
     if (strcmp(this->pool, "mean") == 0) {
         x = x.mean(1);
     } else {
         x = x.index({torch::indexing::Slice(), 0});
     }
-
+    std::cout << "REACHED HERE 6" << std::endl;
     x = this->to_latent(x);
+    std::cout << "REACHED HERE 7" << std::endl;
     return this->mlp_head(x);
 }
