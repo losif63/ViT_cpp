@@ -46,11 +46,14 @@ AttentionImpl::AttentionImpl(int dim, int heads, int dim_head, float dropout)
 
 torch::Tensor AttentionImpl::forward(torch::Tensor x) {
     x = this->norm(x);
-    auto qkv = this->to_qkv(x).chunk(3, -1);
+    std::vector<torch::Tensor> qkv = this->to_qkv(x).chunk(3, -1);
     torch::Tensor q = qkv[0], k = qkv[1], v = qkv[2];
-    q = q.view({q.size(0), heads, q.size(1), -1});
-    k = k.view({k.size(0), heads, k.size(1), -1});
-    v = v.view({v.size(0), heads, v.size(1), -1});
+    q = q.view({q.size(0), q.size(1), this->heads, -1});
+    q = q.permute({0, 2, 1, 3});
+    k = k.view({k.size(0), k.size(1), this->heads, -1});
+    k = k.permute({0, 2, 1, 3});
+    v = v.view({v.size(0), v.size(1), this->heads, -1});
+    v = v.permute({0, 2, 1, 3});
     
     torch::Tensor dots = torch::matmul(q, k.transpose(-1, -2)) * this->scale;
     torch::Tensor attn = this->attend(dots);
@@ -155,22 +158,15 @@ torch::Tensor ViTImpl::forward(torch::Tensor x) {
     int n = x.size(1);
     
     torch::Tensor cls_tokens = this->cls_token.repeat({b, 1, 1});
-    std::cout << "REACHED HERE 1" << std::endl;
     x = torch::cat({cls_tokens, x}, 1);
-    std::cout << "REACHED HERE 2" << std::endl;
     x += this->pos_embedding.index({torch::indexing::Slice(), torch::indexing::Slice(torch::indexing::None, (n + 1))});
-    std::cout << "REACHED HERE 3" << std::endl;
     x = this->dropout(x);
-    std::cout << "REACHED HERE 4" << std::endl;
     x = this->transformer(x);
-    std::cout << "REACHED HERE 5" << std::endl;
     if (strcmp(this->pool, "mean") == 0) {
         x = x.mean(1);
     } else {
         x = x.index({torch::indexing::Slice(), 0});
     }
-    std::cout << "REACHED HERE 6" << std::endl;
     x = this->to_latent(x);
-    std::cout << "REACHED HERE 7" << std::endl;
     return this->mlp_head(x);
 }
