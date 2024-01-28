@@ -168,5 +168,6 @@ torch::Tensor ViTImpl::forward(torch::Tensor x) {
         x = x.index({torch::indexing::Slice(), 0});
     }
     x = this->to_latent(x);
+
     return this->mlp_head(x);
 }

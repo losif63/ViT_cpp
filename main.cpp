@@ -12,7 +12,7 @@ int main(void) {
         6,                                  // depth
         16,                                 // heads
         2048,                               // mlp_dim
-        pool,                              // pool
+        pool,                               // pool
         3,                                  // channels
         64,                                 // dim_head       
         0.1,                                // dropout
@@ -21,4 +21,5 @@ int main(void) {
     
     torch::Tensor img = torch::randn({1, 3, 256, 256});
     torch::Tensor predictions = v(img);
+
 }
