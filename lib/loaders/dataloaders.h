@@ -3,13 +3,18 @@
 
 #include <torch/torch.h>
 
-class CIFAR102Dataset : public torch::data::datasets::Dataset<CIFAR102Dataset, torch::Tensor> {
+typedef torch::data::Example<torch::Tensor, uint8_t> CIFARItem;
+
+class CIFAR102Dataset : public torch::data::datasets::Dataset<CIFAR102Dataset, CIFARItem> {
 public:
-    CIFAR102Dataset();
-    torch::Tensor get(size_t index) override;
+    CIFAR102Dataset(bool train);
+    CIFARItem get(size_t index) override;
     std::optional<size_t> size() const override;
 
 private:
+    bool train;
+    std::vector<torch::Tensor> data;
+    std::vector<uint8_t> labels;
 };
 
 #endif

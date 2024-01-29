@@ -10,7 +10,8 @@
 
 int main(void) {
 
-    CIFAR102Dataset dataset = CIFAR102Dataset();
+    CIFAR102Dataset train = CIFAR102Dataset(true);
+    CIFAR102Dataset test = CIFAR102Dataset(false);
 
     char* pool = "cls";
     ViT v = ViT(
