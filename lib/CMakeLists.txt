@@ -1,1 +1,2 @@
 add_subdirectory(vit_pytorch_cpp)
+add_subdirectory(loaders)

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <torch/torch.h>
 #include "lib/vit_pytorch_cpp/vit.h"
+#include "lib/loaders/dataloaders.h"
 
 #define BATCH_SIZE 64
 #define EPOCHS 20
@@ -8,6 +9,8 @@
 #define GAMMA 0.7
 
 int main(void) {
+
+    CIFAR102Dataset dataset = CIFAR102Dataset();
 
     char* pool = "cls";
     ViT v = ViT(
