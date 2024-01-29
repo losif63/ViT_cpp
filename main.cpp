@@ -1,8 +1,14 @@
 #include <iostream>
 #include <torch/torch.h>
-#include "vit_pytorch_cpp/vit.h"
+#include "lib/vit_pytorch_cpp/vit.h"
+
+#define BATCH_SIZE 64
+#define EPOCHS 20
+#define LEARNING_RATE 3e-5
+#define GAMMA 0.7
 
 int main(void) {
+
     char* pool = "cls";
     ViT v = ViT(
         std::vector<int>({256, 256}),       // image_size
@@ -21,5 +27,6 @@ int main(void) {
     
     torch::Tensor img = torch::randn({1, 3, 256, 256});
     torch::Tensor predictions = v(img);
+
 
 }

@@ -16,7 +16,7 @@ target_compile_features(compiler_flags INTERFACE cxx_std_17)
 
 configure_file(Config.h.in Config.h)
 
-add_subdirectory(vit_pytorch_cpp)
+add_subdirectory(lib)
 
 add_executable(vit main.cpp)
 
