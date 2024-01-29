@@ -3,7 +3,9 @@
 #include <fstream>
 #include "dataloaders.h"
 
-CIFAR102Dataset::CIFAR102Dataset(bool train) : train(train) {
+CIFAR102Dataset::CIFAR102Dataset(bool train) 
+    : train(train)
+{
     const char* filenames[6] ={
         "../data/raw/CIFAR10/cifar-10-batches-bin/data_batch_1.bin",
         "../data/raw/CIFAR10/cifar-10-batches-bin/data_batch_2.bin",
@@ -21,13 +23,18 @@ CIFAR102Dataset::CIFAR102Dataset(bool train) : train(train) {
             ifs.open(filenames[i], std::ifstream::in);
             for(int j = 0; j < 10000; j++) {
                 ifs.read((char *)&row_label, 1);
-                labels.push_back(row_label);
+                torch::Tensor new_label = torch::zeros(
+                    {num_classes},
+                    c10::TensorOptions(c10::ScalarType::Byte)
+                );
+                new_label.index_put_({row_label}, 1);
+                labels.push_back(new_label);
                 ifs.read((char *)row_data, 3072);
                 torch::Tensor new_data = torch::from_blob(
                     row_data, 
                     3072, 
                     c10::TensorOptions(c10::ScalarType::Byte)
-                ).view({3, 32, 32});
+                ).view({1, 3, 32, 32});
                 data.push_back(new_data);
             }
             ifs.close();
@@ -37,13 +44,17 @@ CIFAR102Dataset::CIFAR102Dataset(bool train) : train(train) {
         ifs.open(filenames[5], std::ifstream::in);  
         for(int j = 0; j < 10000; j++) {
             ifs.read((char *)&row_label, 1);
-            labels.push_back(row_label);
+            torch::Tensor new_label = torch::zeros(
+                    {num_classes},
+                    c10::TensorOptions(c10::ScalarType::Byte)
+                );
+                new_label.index_put_({row_label}, 1);
             ifs.read((char *)row_data, 3072);
             torch::Tensor new_data = torch::from_blob(
                 row_data, 
                 3072, 
                 c10::TensorOptions(c10::ScalarType::Byte)
-            ).view({3, 32, 32});
+            ).view({1, 3, 32, 32});
             data.push_back(new_data);
         }
         ifs.close();

@@ -21,6 +21,6 @@ add_subdirectory(lib)
 add_executable(vit main.cpp)
 
 target_compile_options(vit PRIVATE -pthread -lpthread)
-target_link_libraries(vit PUBLIC "${TORCH_LIBRARIES}" compiler_flags vit_pytorch_cpp loaders PRIVATE pthread)
+target_link_libraries(vit PUBLIC "${TORCH_LIBRARIES}" compiler_flags vit_pytorch_cpp loaders tqdm PRIVATE pthread)
 
 # set_property(TARGET vit PROPERTY CXX_STANDARD 17)

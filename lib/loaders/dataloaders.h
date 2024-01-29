@@ -3,7 +3,7 @@
 
 #include <torch/torch.h>
 
-typedef torch::data::Example<torch::Tensor, uint8_t> CIFARItem;
+typedef torch::data::Example<torch::Tensor, torch::Tensor> CIFARItem;
 
 class CIFAR102Dataset : public torch::data::datasets::Dataset<CIFAR102Dataset, CIFARItem> {
 public:
@@ -13,8 +13,9 @@ public:
 
 private:
     bool train;
+    const int num_classes = 10;
     std::vector<torch::Tensor> data;
-    std::vector<uint8_t> labels;
+    std::vector<torch::Tensor> labels;
 };
 
 #endif

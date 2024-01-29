@@ -93,7 +93,6 @@ RearrangeImpl::RearrangeImpl(int p1, int p2) {
 torch::Tensor RearrangeImpl::forward(torch::Tensor x) {
     assert(x.size(2) % p1 == 0);
     assert(x.size(3) % p2 == 0);
-
     int b = x.size(0);
     int c = x.size(1);
     int h = x.size(2) / p1;
@@ -168,6 +167,5 @@ torch::Tensor ViTImpl::forward(torch::Tensor x) {
         x = x.index({torch::indexing::Slice(), 0});
     }
     x = this->to_latent(x);
-
     return this->mlp_head(x);
 }
