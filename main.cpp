@@ -44,7 +44,7 @@ int main(void) {
     model->to(device);
     
     // loss function, optimizer, scheduler
-    auto criterion = torch::nn::CrossEntropyLoss{nullptr};
+    auto criterion = torch::nn::CrossEntropyLoss();
     auto optimizer = torch::optim::Adam(
         model->parameters(),
         torch::optim::AdamOptions(LEARNING_RATE)
@@ -55,20 +55,38 @@ int main(void) {
         double epoch_loss = 0.0;
         double epoch_accuracy = 0.0;
 
+        std::cout << "RUNNING EPOCH " << epoch << "..." << std::endl;
+        int batch_num = 0;
         for (std::vector<CIFARItem>& batch : *train_loader) {
+            std::cout << "RUNNING BATCH_NUM  " << batch_num++ << "..." << std::endl;
             optimizer.zero_grad();
+            std::vector<torch::Tensor> data_array = 
+                std::vector<torch::Tensor>();
+            std::vector<torch::Tensor> label_array = 
+                std::vector<torch::Tensor>();
             for (int i = 0; i < batch.size(); i++) {
-                torch::Tensor data = batch.at(i).data;
-                torch::Tensor label = batch.at(i).target;
-
-                torch::Tensor output = model->forward(data);
-                // torch::Tensor loss = criterion(output, label);
-                // loss.backward();
+                data_array.push_back(batch.at(i).data);
+                label_array.push_back(batch.at(i).target);
             }
+            c10::ArrayRef<torch::Tensor> data_ref = 
+                c10::ArrayRef<torch::Tensor>(
+                    &data_array[0], 
+                    batch.size()
+                );
+            c10::ArrayRef<torch::Tensor> label_ref = 
+                c10::ArrayRef<torch::Tensor>(
+                    &label_array[0], 
+                    batch.size()
+                );
+            torch::Tensor data = torch::stack(data_ref);
+            torch::Tensor label = torch::stack(label_ref);
+            std::cout << data.sizes() << std::endl;
+            std::cout << label.sizes() << std::endl;
+            torch::Tensor output = model->forward(data);
+            torch::Tensor loss = criterion(output, label);
+            loss.backward();
             optimizer.step();
         }
-
-        std::cout << "RUNNING EPOCH " << epoch << "..." << std::endl;
 
     }
 

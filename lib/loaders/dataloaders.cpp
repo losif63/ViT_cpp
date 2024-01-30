@@ -26,15 +26,15 @@ CIFAR102Dataset::CIFAR102Dataset(bool train)
                 torch::Tensor new_label = torch::zeros(
                     {num_classes},
                     c10::TensorOptions(c10::ScalarType::Byte)
-                );
-                new_label.index_put_({row_label}, 1);
+                ).to(torch::kFloat32);
+                new_label.index_put_({row_label}, 1.0);
                 labels.push_back(new_label);
                 ifs.read((char *)row_data, 3072);
                 torch::Tensor new_data = torch::from_blob(
                     row_data, 
                     3072, 
                     c10::TensorOptions(c10::ScalarType::Byte)
-                ).view({1, 3, 32, 32});
+                ).to(torch::kFloat32).view({3, 32, 32});
                 data.push_back(new_data);
             }
             ifs.close();
@@ -47,14 +47,14 @@ CIFAR102Dataset::CIFAR102Dataset(bool train)
             torch::Tensor new_label = torch::zeros(
                     {num_classes},
                     c10::TensorOptions(c10::ScalarType::Byte)
-                );
-                new_label.index_put_({row_label}, 1);
+                ).to(torch::kFloat32);
+                new_label.index_put_({row_label}, 1.0);
             ifs.read((char *)row_data, 3072);
             torch::Tensor new_data = torch::from_blob(
                 row_data, 
                 3072, 
                 c10::TensorOptions(c10::ScalarType::Byte)
-            ).view({1, 3, 32, 32});
+            ).to(torch::kFloat32).view({3, 32, 32});
             data.push_back(new_data);
         }
         ifs.close();
