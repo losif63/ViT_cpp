@@ -4,6 +4,7 @@
 #include "lib/loaders/dataloaders.h"
 // #include <torch/nn/parallel/data_parallel.h>
 
+#define SEED 0
 #define BATCH_SIZE 512
 #define EPOCHS 50
 #define LEARNING_RATE 1e-3
@@ -52,6 +53,9 @@ int main(void) {
     << TORCH_VERSION_MAJOR << "."
     << TORCH_VERSION_MINOR << "."
     << TORCH_VERSION_PATCH << std::endl;
+
+    // Seed torch
+    torch::manual_seed(SEED);
 
     std::cout << "Initializing dataset..." << std::endl;
     CIFAR102Dataset train = CIFAR102Dataset(true);
@@ -140,4 +144,5 @@ int main(void) {
             }
         }
     }
+
 }
