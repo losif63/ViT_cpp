@@ -13,19 +13,23 @@ int main(void) {
 
     torch::Device device(torch::kCPU);
 
+    std::cout << "Initializing dataset..." << std::endl;
     CIFAR102Dataset train = CIFAR102Dataset(true);
     CIFAR102Dataset test = CIFAR102Dataset(false);
+    std::cout << "Dataset initialized." << std::endl;
 
+    std::cout << "Creating dataloader..." << std::endl;
     auto train_loader = torch::data::make_data_loader(
         train, 
         torch::data::DataLoaderOptions().batch_size(BATCH_SIZE)
     );
-
     auto test_loader = torch::data::make_data_loader(
         test,
         torch::data::DataLoaderOptions().batch_size(1)
     );
+    std::cout << "Dataloader initialized." << std::endl;
 
+    std::cout << "Setting up the ViT model..." << std::endl;
     char* pool = "cls";
     ViT model = ViT(
         std::vector<int>({32, 32}),         // image_size
@@ -42,7 +46,9 @@ int main(void) {
         0.1                                 // emb_dropout
     );
     model->to(device);
+    std::cout << "ViT successfully created." << std::endl;
     
+    std::cout << "Creating tools for learning..." << std::endl;
     // loss function, optimizer, scheduler
     auto criterion = torch::nn::CrossEntropyLoss();
     auto optimizer = torch::optim::Adam(
@@ -51,15 +57,15 @@ int main(void) {
     );
     auto scheduler = torch::optim::StepLR(optimizer, 1, GAMMA);
 
+    std::cout << "Learning environment setup complete. ";
+    std::cout << "Beginning learning..." << std::endl;
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
         double epoch_loss = 0.0;
         double epoch_accuracy = 0.0;
 
-        std::cout << "RUNNING EPOCH " << epoch << "..." << std::endl;
         int batch_num = 0;
         for (std::vector<CIFARItem>& batch : *train_loader) {
-            std::cout << "RUNNING BATCH_NUM  " << batch_num++ << "..." << std::endl;
-            optimizer.zero_grad();
+            // Reshape data from batch into single tensor
             std::vector<torch::Tensor> data_array = 
                 std::vector<torch::Tensor>();
             std::vector<torch::Tensor> label_array = 
@@ -80,14 +86,22 @@ int main(void) {
                 );
             torch::Tensor data = torch::stack(data_ref);
             torch::Tensor label = torch::stack(label_ref);
-            std::cout << data.sizes() << std::endl;
-            std::cout << label.sizes() << std::endl;
+
+            // Forward the data & train the model
+            model->zero_grad();
             torch::Tensor output = model->forward(data);
             torch::Tensor loss = criterion(output, label);
             loss.backward();
             optimizer.step();
-        }
 
+            std::printf(
+                "\r| [Epoch %d/%d] | [Batch %d] | loss: %.4f |",
+                epoch + 1,
+                EPOCHS,
+                ++batch_num,
+                loss.item<float>()
+            );
+        }
     }
 
 }
