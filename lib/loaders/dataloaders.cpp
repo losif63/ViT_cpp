@@ -74,6 +74,22 @@ CIFARItem CIFAR102Dataset::get(size_t index) {
     );
 }
 
+bool CIFAR102Dataset::get_train() {
+    return this->train;
+}
+
+int CIFAR102Dataset::get_num_classes() {
+    return this->num_classes;
+}
+
+std::vector<torch::Tensor> CIFAR102Dataset::get_data() {
+    return this->data;
+}
+
+std::vector<torch::Tensor> CIFAR102Dataset::get_labels() {
+    return this->labels;
+}
+
 c10::optional<size_t> CIFAR102Dataset::size() const {
     return this->data.size();
 }

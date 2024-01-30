@@ -9,24 +9,42 @@
 #define LEARNING_RATE 1e-3
 #define GAMMA 0.7
 
-torch::Device device(torch::kCUDA, 0);
-torch::Device device1(torch::kCUDA, 1);
-torch::Device device2(torch::kCUDA, 2);
-torch::Device device3(torch::kCUDA, 3);
-torch::Device device4(torch::kCUDA, 4);
-torch::Device device5(torch::kCUDA, 5);
-torch::Device device6(torch::kCUDA, 6);
-torch::Device device7(torch::kCUDA, 7);
-std::vector<torch::Device> all_devices {
-    device,
-    device1,
-    device2,
-    device3,
-    device4,
-    device5,
-    device6,
-    device7
-};
+torch::Device device(torch::kCUDA);
+// torch::Device device1(torch::kCUDA, 1);
+// torch::Device device2(torch::kCUDA, 2);
+// torch::Device device3(torch::kCUDA, 3);
+// torch::Device device4(torch::kCUDA, 4);
+// torch::Device device5(torch::kCUDA, 5);
+// torch::Device device6(torch::kCUDA, 6);
+// torch::Device device7(torch::kCUDA, 7);
+// std::vector<torch::Device> all_devices {
+//     device,
+//     device1,
+//     device2,
+//     device3,
+//     device4,
+//     device5,
+//     device6,
+//     device7
+// };
+
+std::vector<torch::Tensor> CIFAR_from_batch(std::vector<CIFARItem>& batch) {
+    // Reshape data from batch into single tensor
+    std::vector<torch::Tensor> data_array = std::vector<torch::Tensor>();
+    std::vector<torch::Tensor> label_array = std::vector<torch::Tensor>();
+    for (int i = 0; i < batch.size(); i++) {
+        data_array.push_back(batch.at(i).data);
+        label_array.push_back(batch.at(i).target);
+    }
+    c10::ArrayRef<torch::Tensor> data_ref = 
+        c10::ArrayRef<torch::Tensor>(&data_array[0], batch.size());
+    c10::ArrayRef<torch::Tensor> label_ref = 
+        c10::ArrayRef<torch::Tensor>(&label_array[0], batch.size());
+    torch::Tensor data = torch::stack(data_ref).to(device);
+    torch::Tensor label = torch::stack(label_ref).to(device);
+
+    return std::vector<torch::Tensor>({data, label});
+}
 
 int main(void) {
 
@@ -44,10 +62,6 @@ int main(void) {
     auto train_loader = torch::data::make_data_loader(
         train, 
         torch::data::DataLoaderOptions().batch_size(BATCH_SIZE)
-    );
-    auto test_loader = torch::data::make_data_loader(
-        test,
-        torch::data::DataLoaderOptions().batch_size(1)
     );
     std::cout << "Dataloader initialized." << std::endl;
 
@@ -88,47 +102,40 @@ int main(void) {
 
         int batch_num = 0;
         for (std::vector<CIFARItem>& batch : *train_loader) {
-            // Reshape data from batch into single tensor
-            std::vector<torch::Tensor> data_array = 
-                std::vector<torch::Tensor>();
-            std::vector<torch::Tensor> label_array = 
-                std::vector<torch::Tensor>();
-            for (int i = 0; i < batch.size(); i++) {
-                data_array.push_back(batch.at(i).data);
-                label_array.push_back(batch.at(i).target);
-            }
-            c10::ArrayRef<torch::Tensor> data_ref = 
-                c10::ArrayRef<torch::Tensor>(
-                    &data_array[0], 
-                    batch.size()
-                );
-            c10::ArrayRef<torch::Tensor> label_ref = 
-                c10::ArrayRef<torch::Tensor>(
-                    &label_array[0], 
-                    batch.size()
-                );
-            torch::Tensor data = torch::stack(data_ref).to(device);
-            torch::Tensor label = torch::stack(label_ref).to(device);
+            std::vector<torch::Tensor> batch_items = CIFAR_from_batch(batch);
+            torch::Tensor data = batch_items.at(0);
+            torch::Tensor label = batch_items.at(1);
 
             // Forward the data & train the model
             model->zero_grad();
-            // torch::Tensor output = torch::nn::parallel::data_parallel(
-            //     model, 
-            //     data
-            // );
-            // std::cout << output.sizes() << std::endl;
             torch::Tensor output = model->forward(data);
             torch::Tensor loss = criterion(output, label);
             loss.backward();
             optimizer.step();
-            if(batch_num++ % 10 == 0)
-            std::printf(
-                "| [Epoch %2d/%2d] | [Batch %3d] | loss: %.4f |\n",
-                epoch + 1,
-                EPOCHS,
-                batch_num,
-                loss.item<float>()
-            );
+            if(batch_num++ % 10 == 0) {
+                int correct = 0;
+                auto test_loader = torch::data::make_data_loader(
+                    test,
+                    torch::data::DataLoaderOptions().batch_size(1)
+                );
+                for (std::vector<CIFARItem>& batch2 : *test_loader) {
+                //     std::vector<torch::Tensor> asdf = CIFAR_from_batch(batch2);
+                //     torch::Tensor data_tensor = asdf.at(0);
+                //     torch::Tensor label_tensor = asdf.at(1);
+
+                //     torch::Tensor target = label_tensor.argmax(1);
+                //     torch::Tensor output = model->forward(data_tensor).argmax(1);
+                //     correct += (output == label_tensor).sum().item<int>();
+                }
+                std::printf(
+                    "| [Epoch %2d/%2d] | [Batch %3d] | Training loss: %.4f | Validation accuracy: %.4f |\n",
+                    epoch + 1,
+                    EPOCHS,
+                    batch_num,
+                    loss.item<float>(),
+                    (double)correct / 10000.0
+                );
+            }
         }
     }
 }

@@ -10,6 +10,10 @@ public:
     CIFAR102Dataset(bool train);
     ~CIFAR102Dataset() override;
     CIFARItem get(size_t index) override;
+    bool get_train();
+    int get_num_classes();
+    std::vector<torch::Tensor> get_data();
+    std::vector<torch::Tensor> get_labels();
     c10::optional<size_t> size() const override;
 
 private:
