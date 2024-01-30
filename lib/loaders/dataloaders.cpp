@@ -63,6 +63,10 @@ CIFAR102Dataset::CIFAR102Dataset(bool train)
     free(row_data);
 }
 
+CIFAR102Dataset::~CIFAR102Dataset() {
+    
+}
+
 CIFARItem CIFAR102Dataset::get(size_t index) {
     return CIFARItem(
         this->data.at(index),
@@ -70,6 +74,6 @@ CIFARItem CIFAR102Dataset::get(size_t index) {
     );
 }
 
-std::optional<size_t> CIFAR102Dataset::size() const {
+c10::optional<size_t> CIFAR102Dataset::size() const {
     return this->data.size();
 }

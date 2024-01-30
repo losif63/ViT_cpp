@@ -2,8 +2,10 @@
 export SYS_NAME=$(uname -s)
 if [[ "$SYS_NAME" == "Linux" ]]; then
     export TORCH_PATH=/path/to/torch
+    export PATH_TO_CUDA=/path/to/cuda
 elif [[ "$SYS_NAME" == "Darwin" ]]; then
     export TORCH_PATH=/path/to/torch
+    export PATH_TO_CUDA=/path/to/cuda
 fi
 
 mkdir data

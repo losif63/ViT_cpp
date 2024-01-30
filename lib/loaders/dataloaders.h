@@ -8,8 +8,9 @@ typedef torch::data::Example<torch::Tensor, torch::Tensor> CIFARItem;
 class CIFAR102Dataset : public torch::data::datasets::Dataset<CIFAR102Dataset, CIFARItem> {
 public:
     CIFAR102Dataset(bool train);
+    ~CIFAR102Dataset() override;
     CIFARItem get(size_t index) override;
-    std::optional<size_t> size() const override;
+    c10::optional<size_t> size() const override;
 
 private:
     bool train;

@@ -2,16 +2,32 @@
 #include <torch/torch.h>
 #include "lib/vit_pytorch_cpp/vit.h"
 #include "lib/loaders/dataloaders.h"
-#include "lib/tqdm/tqdm.h"
+// #include <torch/nn/parallel/data_parallel.h>
 
 #define BATCH_SIZE 64
 #define EPOCHS 20
 #define LEARNING_RATE 3e-5
 #define GAMMA 0.7
 
-torch::Device device(torch::kCPU);
+torch::Device device(torch::kCUDA, 0);
+torch::Device device1(torch::kCUDA, 1);
+torch::Device device2(torch::kCUDA, 2);
+torch::Device device3(torch::kCUDA, 3);
+torch::Device device4(torch::kCUDA, 4);
+torch::Device device5(torch::kCUDA, 5);
+torch::Device device6(torch::kCUDA, 6);
+torch::Device device7(torch::kCUDA, 7);
+std::vector<torch::Device> all_devices {
+    device,
+    device1
+};
 
 int main(void) {
+
+    std::cout << "PyTorch version: "
+    << TORCH_VERSION_MAJOR << "."
+    << TORCH_VERSION_MINOR << "."
+    << TORCH_VERSION_PATCH << std::endl;
 
     std::cout << "Initializing dataset..." << std::endl;
     CIFAR102Dataset train = CIFAR102Dataset(true);
@@ -46,6 +62,7 @@ int main(void) {
         0.1                                 // emb_dropout
     );
     model->to(device);
+    
     std::cout << "ViT successfully created." << std::endl;
     
     std::cout << "Creating tools for learning..." << std::endl;
@@ -95,7 +112,7 @@ int main(void) {
             optimizer.step();
 
             std::printf(
-                "| [Epoch %d/%d] | [Batch %d] | loss: %.4f |",
+                "| [Epoch %d/%d] | [Batch %d] | loss: %.4f |\n",
                 epoch + 1,
                 EPOCHS,
                 ++batch_num,

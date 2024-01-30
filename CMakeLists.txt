@@ -20,6 +20,7 @@ add_subdirectory(lib)
 
 add_executable(vit main.cpp)
 
+target_include_directories(vit PRIVATE ${PATH_TO_CUDA})
 target_compile_options(vit PRIVATE -pthread -lpthread)
 target_link_libraries(vit PUBLIC "${TORCH_LIBRARIES}" compiler_flags vit_pytorch_cpp loaders PRIVATE pthread)
 
