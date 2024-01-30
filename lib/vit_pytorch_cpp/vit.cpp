@@ -4,7 +4,6 @@
 #include <string.h>
 #include "vit.h"
 
-
 FeedForwardImpl::FeedForwardImpl(int dim, int hidden_dim, float dropout)
 {
     this->net = register_module("net", torch::nn::Sequential(

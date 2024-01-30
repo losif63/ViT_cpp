@@ -9,9 +9,9 @@
 #define LEARNING_RATE 3e-5
 #define GAMMA 0.7
 
-int main(void) {
+torch::Device device(torch::kCPU);
 
-    torch::Device device(torch::kCPU);
+int main(void) {
 
     std::cout << "Initializing dataset..." << std::endl;
     CIFAR102Dataset train = CIFAR102Dataset(true);
@@ -84,8 +84,8 @@ int main(void) {
                     &label_array[0], 
                     batch.size()
                 );
-            torch::Tensor data = torch::stack(data_ref);
-            torch::Tensor label = torch::stack(label_ref);
+            torch::Tensor data = torch::stack(data_ref).to(device);
+            torch::Tensor label = torch::stack(label_ref).to(device);
 
             // Forward the data & train the model
             model->zero_grad();
@@ -95,7 +95,7 @@ int main(void) {
             optimizer.step();
 
             std::printf(
-                "\r| [Epoch %d/%d] | [Batch %d] | loss: %.4f |",
+                "| [Epoch %d/%d] | [Batch %d] | loss: %.4f |",
                 epoch + 1,
                 EPOCHS,
                 ++batch_num,
