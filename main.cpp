@@ -4,9 +4,9 @@
 #include "lib/loaders/dataloaders.h"
 // #include <torch/nn/parallel/data_parallel.h>
 
-#define BATCH_SIZE 64
-#define EPOCHS 20
-#define LEARNING_RATE 3e-5
+#define BATCH_SIZE 512
+#define EPOCHS 100
+#define LEARNING_RATE 1e-3
 #define GAMMA 0.7
 
 torch::Device device(torch::kCUDA, 0);
@@ -19,7 +19,13 @@ torch::Device device6(torch::kCUDA, 6);
 torch::Device device7(torch::kCUDA, 7);
 std::vector<torch::Device> all_devices {
     device,
-    device1
+    device1,
+    device2,
+    device3,
+    device4,
+    device5,
+    device6,
+    device7
 };
 
 int main(void) {
@@ -68,9 +74,9 @@ int main(void) {
     std::cout << "Creating tools for learning..." << std::endl;
     // loss function, optimizer, scheduler
     auto criterion = torch::nn::CrossEntropyLoss();
-    auto optimizer = torch::optim::Adam(
+    auto optimizer = torch::optim::AdamW(
         model->parameters(),
-        torch::optim::AdamOptions(LEARNING_RATE)
+        torch::optim::AdamWOptions(LEARNING_RATE)
     );
     auto scheduler = torch::optim::StepLR(optimizer, 1, GAMMA);
 
@@ -106,19 +112,23 @@ int main(void) {
 
             // Forward the data & train the model
             model->zero_grad();
+            // torch::Tensor output = torch::nn::parallel::data_parallel(
+            //     model, 
+            //     data
+            // );
+            // std::cout << output.sizes() << std::endl;
             torch::Tensor output = model->forward(data);
             torch::Tensor loss = criterion(output, label);
             loss.backward();
             optimizer.step();
-
+            if(batch_num++ % 10 == 0)
             std::printf(
-                "| [Epoch %d/%d] | [Batch %d] | loss: %.4f |\n",
+                "| [Epoch %2d/%2d] | [Batch %3d] | loss: %.4f |\n",
                 epoch + 1,
                 EPOCHS,
-                ++batch_num,
+                batch_num,
                 loss.item<float>()
             );
         }
     }
-
 }
