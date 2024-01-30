@@ -49,6 +49,7 @@ CIFAR102Dataset::CIFAR102Dataset(bool train)
                     c10::TensorOptions(c10::ScalarType::Byte)
                 ).to(torch::kFloat32);
                 new_label.index_put_({row_label}, 1.0);
+            labels.push_back(new_label);
             ifs.read((char *)row_data, 3072);
             torch::Tensor new_data = torch::from_blob(
                 row_data, 

@@ -5,7 +5,7 @@
 // #include <torch/nn/parallel/data_parallel.h>
 
 #define BATCH_SIZE 512
-#define EPOCHS 100
+#define EPOCHS 50
 #define LEARNING_RATE 1e-3
 #define GAMMA 0.7
 
@@ -28,7 +28,7 @@ torch::Device device(torch::kCUDA);
 //     device7
 // };
 
-std::vector<torch::Tensor> CIFAR_from_batch(std::vector<CIFARItem>& batch) {
+std::vector<torch::Tensor> CIFAR_handle_batch(std::vector<CIFARItem>& batch) {
     // Reshape data from batch into single tensor
     std::vector<torch::Tensor> data_array = std::vector<torch::Tensor>();
     std::vector<torch::Tensor> label_array = std::vector<torch::Tensor>();
@@ -61,6 +61,10 @@ int main(void) {
     std::cout << "Creating dataloader..." << std::endl;
     auto train_loader = torch::data::make_data_loader(
         train, 
+        torch::data::DataLoaderOptions().batch_size(BATCH_SIZE)
+    );
+    auto test_loader = torch::data::make_data_loader(
+        test, 
         torch::data::DataLoaderOptions().batch_size(BATCH_SIZE)
     );
     std::cout << "Dataloader initialized." << std::endl;
@@ -102,38 +106,36 @@ int main(void) {
 
         int batch_num = 0;
         for (std::vector<CIFARItem>& batch : *train_loader) {
-            std::vector<torch::Tensor> batch_items = CIFAR_from_batch(batch);
-            torch::Tensor data = batch_items.at(0);
-            torch::Tensor label = batch_items.at(1);
-
+            std::vector<torch::Tensor> train_batch = CIFAR_handle_batch(batch);
+            torch::Tensor train_data = train_batch.at(0);
+            torch::Tensor train_label = train_batch.at(1);
             // Forward the data & train the model
             model->zero_grad();
-            torch::Tensor output = model->forward(data);
-            torch::Tensor loss = criterion(output, label);
+            torch::Tensor output = model->forward(train_data);
+            torch::Tensor loss = criterion(output, train_label);
             loss.backward();
             optimizer.step();
+
+            // print epoch, batch, training loss, validation accuracy
             if(batch_num++ % 10 == 0) {
                 int correct = 0;
-                auto test_loader = torch::data::make_data_loader(
-                    test,
-                    torch::data::DataLoaderOptions().batch_size(1)
-                );
-                for (std::vector<CIFARItem>& batch2 : *test_loader) {
-                //     std::vector<torch::Tensor> asdf = CIFAR_from_batch(batch2);
-                //     torch::Tensor data_tensor = asdf.at(0);
-                //     torch::Tensor label_tensor = asdf.at(1);
+                for(std::vector<CIFARItem>& batch2 : *test_loader) {
+                    std::vector<torch::Tensor> test_batch = CIFAR_handle_batch(batch2);
+                    torch::Tensor test_data = test_batch.at(0);
+                    torch::Tensor test_label = test_batch.at(1);
 
-                //     torch::Tensor target = label_tensor.argmax(1);
-                //     torch::Tensor output = model->forward(data_tensor).argmax(1);
-                //     correct += (output == label_tensor).sum().item<int>();
+                    torch::Tensor test_output = model->forward(test_data).argmax(1);
+                    torch::Tensor test_target = test_label.argmax(1);
+                    correct += (test_output == test_target).sum().item<int>();
                 }
+                
                 std::printf(
-                    "| [Epoch %2d/%2d] | [Batch %3d] | Training loss: %.4f | Validation accuracy: %.4f |\n",
+                    "| [Epoch %2d/%2d] | [Batch %3d] | Training loss: %.4f | Validation accuracy: %3.2f %% |\n",
                     epoch + 1,
                     EPOCHS,
                     batch_num,
                     loss.item<float>(),
-                    (double)correct / 10000.0
+                    (double)correct / 100.0
                 );
             }
         }
